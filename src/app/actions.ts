@@ -162,3 +162,57 @@ export async function saveKpiTemplate(
     };
   }
 }
+
+export async function deleteKpiTemplate(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const rawId = formData.get("id");
+  const id =
+    typeof rawId === "string" && /^\d+$/.test(rawId) ? Number(rawId) : 0;
+
+  if (id <= 0) {
+    return errorState("ไม่พบรหัส KPI สำหรับลบข้อมูล");
+  }
+
+  try {
+    await sql.begin(async (tx) => {
+      await tx`
+        DELETE FROM kpi_doc
+        WHERE kpi_topic_id = ${id}
+      `;
+
+      await tx`
+        DELETE FROM kpi_pm
+        WHERE kpi_topic_id = ${id}
+      `;
+
+      await tx`
+        DELETE FROM kpi_template
+        WHERE kpi_topic_id = ${id}
+      `;
+
+      const deletedTopics = await tx<{ id: number }[]>`
+        DELETE FROM kpi_topic
+        WHERE id = ${id}
+        RETURNING id
+      `;
+
+      if (!deletedTopics[0]?.id) {
+        throw new Error("ไม่พบ KPI ที่ต้องการลบ");
+      }
+    });
+
+    revalidatePath("/");
+
+    return {
+      status: "success",
+      message: "ลบ KPI สำเร็จ",
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "ลบ KPI ไม่สำเร็จ",
+    };
+  }
+}
