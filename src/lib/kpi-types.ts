@@ -73,3 +73,25 @@ export type ActionState = {
   message: string;
   selectedId?: number;
 };
+
+export type KpiStatusFilter = "all" | "active" | "inactive";
+
+export type KpiGridFilters = {
+  keyword: string;
+  status: KpiStatusFilter;
+  kpiType: string;
+  page: number;
+  pageSize: number;
+};
+
+export type KpiGridRow = KpiDetail & {
+  typeNames: string[];
+};
+
+export type KpiGridResult = {
+  rows: KpiGridRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
