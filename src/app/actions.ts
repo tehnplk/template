@@ -171,7 +171,7 @@ export async function deleteKpiTemplate(
   const id =
     typeof rawId === "string" && /^\d+$/.test(rawId) ? Number(rawId) : 0;
 
-  if (id <= 0) {
+  if (!Number.isSafeInteger(id) || id <= 0) {
     return errorState("ไม่พบรหัส KPI สำหรับลบข้อมูล");
   }
 
@@ -210,9 +210,14 @@ export async function deleteKpiTemplate(
       message: "ลบ KPI สำเร็จ",
     };
   } catch (error) {
+    const message =
+      error instanceof Error && error.message === "ไม่พบ KPI ที่ต้องการลบ"
+        ? error.message
+        : "ลบ KPI ไม่สำเร็จ";
+
     return {
       status: "error",
-      message: error instanceof Error ? error.message : "ลบ KPI ไม่สำเร็จ",
+      message,
     };
   }
 }
