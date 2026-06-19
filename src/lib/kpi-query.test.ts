@@ -46,4 +46,34 @@ describe("parseKpiGridFilters", () => {
       pageSize: 10,
     });
   });
+
+  it("returns default page when numeric page exceeds the maximum", () => {
+    expect(parseKpiGridFilters({ page: "10001" }).page).toBe(1);
+  });
+
+  it("uses the first item from array values", () => {
+    expect(
+      parseKpiGridFilters({
+        q: [" cancer ", "diabetes"],
+        status: ["active", "inactive"],
+        type: ["3", "4"],
+        page: ["2", "3"],
+        pageSize: ["25", "50"],
+      }),
+    ).toEqual({
+      keyword: "cancer",
+      status: "active",
+      kpiType: "3",
+      page: 2,
+      pageSize: 25,
+    });
+  });
+
+  it("accepts pageSize 50", () => {
+    expect(parseKpiGridFilters({ pageSize: "50" }).pageSize).toBe(50);
+  });
+
+  it("normalizes status with whitespace", () => {
+    expect(parseKpiGridFilters({ status: "active " }).status).toBe("active");
+  });
 });

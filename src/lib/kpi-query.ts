@@ -18,19 +18,25 @@ function first(value: SearchValue): string {
   return value ?? "";
 }
 
-function positiveInt(value: string, fallback: number): number {
+function positiveInt(
+  value: string,
+  fallback: number,
+  max = Number.MAX_SAFE_INTEGER,
+): number {
   if (!/^\d+$/.test(value)) {
     return fallback;
   }
 
   const parsed = Number(value);
-  return parsed > 0 ? parsed : fallback;
+  return Number.isSafeInteger(parsed) && parsed > 0 && parsed <= max
+    ? parsed
+    : fallback;
 }
 
 export function parseKpiGridFilters(
   searchParams: KpiSearchParams,
 ): KpiGridFilters {
-  const statusValue = first(searchParams.status);
+  const statusValue = first(searchParams.status).trim();
   const pageSize = positiveInt(first(searchParams.pageSize), 10);
 
   return {
@@ -39,7 +45,7 @@ export function parseKpiGridFilters(
       ? (statusValue as KpiStatusFilter)
       : "all",
     kpiType: first(searchParams.type).trim(),
-    page: positiveInt(first(searchParams.page), 1),
+    page: positiveInt(first(searchParams.page), 1, 10000),
     pageSize: [10, 25, 50].includes(pageSize) ? pageSize : 10,
   };
 }
