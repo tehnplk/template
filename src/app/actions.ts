@@ -58,6 +58,7 @@ export async function saveKpiTemplate(
           target_area_type,
           target_gender,
           target_age_range,
+          target_previous_diag,
           target_other,
           data_entry_inscl,
           data_entry_diag,
@@ -65,6 +66,7 @@ export async function saveKpiTemplate(
           data_entry_drug,
           data_entry_lab,
           data_entry_special_pp,
+          data_entry_vaccine,
           data_entry_other
         )
         VALUES (
@@ -72,6 +74,7 @@ export async function saveKpiTemplate(
           ${payload.template.target_area_type},
           ${payload.template.target_gender},
           ${payload.template.target_age_range},
+          ${payload.template.target_previous_diag},
           ${payload.template.target_other},
           ${payload.template.data_entry_inscl},
           ${payload.template.data_entry_diag},
@@ -79,6 +82,7 @@ export async function saveKpiTemplate(
           ${payload.template.data_entry_drug},
           ${payload.template.data_entry_lab},
           ${payload.template.data_entry_special_pp},
+          ${payload.template.data_entry_vaccine},
           ${payload.template.data_entry_other}
         )
         ON CONFLICT (kpi_topic_id)
@@ -86,6 +90,7 @@ export async function saveKpiTemplate(
           target_area_type = EXCLUDED.target_area_type,
           target_gender = EXCLUDED.target_gender,
           target_age_range = EXCLUDED.target_age_range,
+          target_previous_diag = EXCLUDED.target_previous_diag,
           target_other = EXCLUDED.target_other,
           data_entry_inscl = EXCLUDED.data_entry_inscl,
           data_entry_diag = EXCLUDED.data_entry_diag,
@@ -93,6 +98,7 @@ export async function saveKpiTemplate(
           data_entry_drug = EXCLUDED.data_entry_drug,
           data_entry_lab = EXCLUDED.data_entry_lab,
           data_entry_special_pp = EXCLUDED.data_entry_special_pp,
+          data_entry_vaccine = EXCLUDED.data_entry_vaccine,
           data_entry_other = EXCLUDED.data_entry_other
       `;
 
@@ -124,18 +130,18 @@ export async function saveKpiTemplate(
 
       if (payload.document) {
         await tx`
-          INSERT INTO kpi_doc (kpi_topic_id, doc_name, doc_type, file_path)
+          INSERT INTO kpi_doc (kpi_topic_id, doc_name, doc_type, google_drive_url)
           VALUES (
             ${savedTopicId},
             ${payload.document.doc_name},
             ${payload.document.doc_type},
-            ${payload.document.file_path}
+            ${payload.document.google_drive_url}
           )
           ON CONFLICT (kpi_topic_id)
           DO UPDATE SET
             doc_name = EXCLUDED.doc_name,
             doc_type = EXCLUDED.doc_type,
-            file_path = EXCLUDED.file_path
+            google_drive_url = EXCLUDED.google_drive_url
         `;
       } else {
         await tx`

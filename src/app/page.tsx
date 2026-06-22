@@ -10,7 +10,7 @@ import type {
   KpiTopic,
   KpiTypeOption,
 } from "@/lib/kpi-types";
-import { deleteKpiTemplate, saveKpiTemplate } from "./actions";
+import { saveKpiTemplate } from "./actions";
 import { KpiTemplateClient } from "./kpi-template-client";
 
 export const dynamic = "force-dynamic";
@@ -41,15 +41,13 @@ export default async function Home({
   const offset = (filters.page - 1) * filters.pageSize;
   const keywordPattern = `%${filters.keyword}%`;
 
-  const statusCondition =
-    filters.status === "active"
-      ? sql`AND is_active = true`
-      : filters.status === "inactive"
-        ? sql`AND is_active = false`
-        : sql``;
-
-  const typeCondition = filters.kpiType
-    ? sql`AND kpi_type::text LIKE ${`%\"${filters.kpiType}\"%`}`
+  const departmentCondition = filters.department
+    ? sql`AND EXISTS (
+        SELECT 1
+        FROM kpi_pm
+        WHERE kpi_pm.kpi_topic_id = kpi_topic.id
+          AND kpi_pm.pm_department = ${filters.department}
+      )`
     : sql``;
 
   const [countRows, topics, departments, kpiTypes] = await Promise.all([
@@ -57,15 +55,13 @@ export default async function Home({
       SELECT COUNT(*)::text AS total
       FROM kpi_topic
       WHERE kpi_name ILIKE ${keywordPattern}
-      ${statusCondition}
-      ${typeCondition}
+      ${departmentCondition}
     `,
     sql<KpiTopic[]>`
       SELECT id, kpi_name, is_active, kpi_type
       FROM kpi_topic
       WHERE kpi_name ILIKE ${keywordPattern}
-      ${statusCondition}
-      ${typeCondition}
+      ${departmentCondition}
       ORDER BY kpi_name
       LIMIT ${filters.pageSize}
       OFFSET ${offset}
@@ -98,7 +94,7 @@ export default async function Home({
             WHERE kpi_topic_id IN ${sql(topicIds)}
           `,
           sql<KpiDocument[]>`
-            SELECT id, kpi_topic_id, doc_name, doc_type, file_path, created_at::text
+            SELECT id, kpi_topic_id, doc_name, doc_type, google_drive_url, created_at::text
             FROM kpi_doc
             WHERE kpi_topic_id IN ${sql(topicIds)}
           `,
@@ -135,7 +131,6 @@ export default async function Home({
 
   return (
     <KpiTemplateClient
-      deleteAction={deleteKpiTemplate}
       departments={departments}
       filters={filters}
       grid={grid}

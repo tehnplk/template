@@ -6,8 +6,7 @@ describe("parseKpiGridFilters", () => {
   it("returns defaults when params are missing", () => {
     expect(parseKpiGridFilters({})).toEqual({
       keyword: "",
-      status: "all",
-      kpiType: "",
+      department: "",
       page: 1,
       pageSize: 10,
     });
@@ -17,31 +16,27 @@ describe("parseKpiGridFilters", () => {
     expect(
       parseKpiGridFilters({
         q: " cancer ",
-        status: "inactive",
-        type: "3",
+        department: " IT ",
         page: "2",
         pageSize: "25",
       }),
     ).toEqual({
       keyword: "cancer",
-      status: "inactive",
-      kpiType: "3",
+      department: "IT",
       page: 2,
       pageSize: 25,
     });
   });
 
-  it("guards invalid status, page, and pageSize back to defaults", () => {
+  it("guards invalid page and pageSize back to defaults", () => {
     expect(
       parseKpiGridFilters({
-        status: "archived",
         page: "0",
         pageSize: "30",
       }),
     ).toEqual({
       keyword: "",
-      status: "all",
-      kpiType: "",
+      department: "",
       page: 1,
       pageSize: 10,
     });
@@ -55,15 +50,13 @@ describe("parseKpiGridFilters", () => {
     expect(
       parseKpiGridFilters({
         q: [" cancer ", "diabetes"],
-        status: ["active", "inactive"],
-        type: ["3", "4"],
+        department: [" IT ", "Finance"],
         page: ["2", "3"],
         pageSize: ["25", "50"],
       }),
     ).toEqual({
       keyword: "cancer",
-      status: "active",
-      kpiType: "3",
+      department: "IT",
       page: 2,
       pageSize: 25,
     });
@@ -73,7 +66,7 @@ describe("parseKpiGridFilters", () => {
     expect(parseKpiGridFilters({ pageSize: "50" }).pageSize).toBe(50);
   });
 
-  it("normalizes status with whitespace", () => {
-    expect(parseKpiGridFilters({ status: "active " }).status).toBe("active");
+  it("normalizes department with whitespace", () => {
+    expect(parseKpiGridFilters({ department: " IT " }).department).toBe("IT");
   });
 });

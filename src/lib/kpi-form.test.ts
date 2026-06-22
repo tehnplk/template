@@ -23,6 +23,7 @@ describe("parseKpiTemplateForm", () => {
     formData.set("target_area_type", "Hospital");
     formData.set("target_gender", "Female");
     formData.set("target_age_range", "45-70");
+    formData.set("target_previous_diag", "E11,I10");
     formData.set("target_other", "Annual");
     formData.set("data_entry_inscl", "INSCL");
     formData.set("data_entry_diag", "DIAG");
@@ -30,13 +31,12 @@ describe("parseKpiTemplateForm", () => {
     formData.set("data_entry_drug", "DRUG");
     formData.set("data_entry_lab", "LAB");
     formData.set("data_entry_special_pp", "SPECIAL");
+    formData.set("data_entry_vaccine", "VACCINE");
     formData.set("data_entry_other", "OTHER");
     formData.set("pm_name", "Owner");
     formData.set("pm_position", "Manager");
     formData.set("pm_department", "IT");
-    formData.set("doc_name", "Manual");
-    formData.set("doc_type", "PDF");
-    formData.set("file_path", "/docs/manual.pdf");
+    formData.set("google_drive_url", "https://drive.google.com/file/d/example/view");
 
     expect(parseKpiTemplateForm(formData)).toEqual({
       ok: true,
@@ -51,6 +51,7 @@ describe("parseKpiTemplateForm", () => {
           target_area_type: "Hospital",
           target_gender: "Female",
           target_age_range: "45-70",
+          target_previous_diag: "E11,I10",
           target_other: "Annual",
           data_entry_inscl: "INSCL",
           data_entry_diag: "DIAG",
@@ -58,6 +59,7 @@ describe("parseKpiTemplateForm", () => {
           data_entry_drug: "DRUG",
           data_entry_lab: "LAB",
           data_entry_special_pp: "SPECIAL",
+          data_entry_vaccine: "VACCINE",
           data_entry_other: "OTHER",
         },
         pm: {
@@ -66,20 +68,18 @@ describe("parseKpiTemplateForm", () => {
           pm_department: "IT",
         },
         document: {
-          doc_name: "Manual",
-          doc_type: "PDF",
-          file_path: "/docs/manual.pdf",
+          doc_name: "Google Drive",
+          doc_type: "URL",
+          google_drive_url: "https://drive.google.com/file/d/example/view",
         },
       },
     });
   });
 
-  it("sets document to null when document fields are empty", () => {
+  it("sets document to null when document URL is empty", () => {
     const formData = new FormData();
     formData.set("kpi_name", "Cancer Screening");
-    formData.set("doc_name", " ");
-    formData.set("doc_type", "");
-    formData.set("file_path", " ");
+    formData.set("google_drive_url", " ");
 
     const result = parseKpiTemplateForm(formData);
 
@@ -89,15 +89,14 @@ describe("parseKpiTemplateForm", () => {
     }
   });
 
-  it("requires document name and type when adding a document", () => {
+  it("requires document URL to be from Google Drive", () => {
     const formData = new FormData();
     formData.set("kpi_name", "Cancer Screening");
-    formData.set("doc_name", "Manual");
-    formData.set("doc_type", " ");
+    formData.set("google_drive_url", "https://example.com/manual.pdf");
 
     expect(parseKpiTemplateForm(formData)).toEqual({
       ok: false,
-      message: "กรุณาระบุชื่อเอกสารและประเภทเอกสาร",
+      message: "กรุณาระบุ URL Google Drive เท่านั้น",
     });
   });
 });

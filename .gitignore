@@ -42,3 +42,8 @@ next-env.d.ts
 .superpowers
 .playwright-cli
 .worktrees
+.codex-logs
+
+deploy.md
+dept_export.txt
+dev-server.log

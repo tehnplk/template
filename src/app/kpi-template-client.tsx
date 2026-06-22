@@ -1,15 +1,25 @@
 "use client";
 
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Pencil,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
 import Link from "next/link";
+import Swal from "sweetalert2";
 import { useActionState, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ActionState,
-  CDepartmentModel,
-  CKpiTypeModel,
+  DepartmentOption,
   KpiDetail,
   KpiGridFilters,
   KpiGridResult,
+  KpiTypeOption,
 } from "@/lib/kpi-types";
 
 type TemplateAction = (
@@ -18,15 +28,14 @@ type TemplateAction = (
 ) => Promise<ActionState>;
 
 type KpiTemplateClientProps = {
-  deleteAction: TemplateAction;
-  departments: CDepartmentModel[];
+  departments: DepartmentOption[];
   filters: KpiGridFilters;
   grid: KpiGridResult;
-  kpiTypes: CKpiTypeModel[];
+  kpiTypes: KpiTypeOption[];
   saveAction: TemplateAction;
 };
 
-type ModalMode = "create" | "edit";
+type ModalMode = "create" | "edit" | "view";
 
 const initialActionState: ActionState = {
   status: "idle",
@@ -34,13 +43,19 @@ const initialActionState: ActionState = {
 };
 
 const inputClass =
-  "min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
+  "min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition read-only:cursor-text read-only:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-600";
+
+const filterInputClass =
+  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
 
 const textareaClass =
-  "min-h-24 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-sm leading-6 text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
+  "min-h-24 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-sm leading-6 text-slate-950 outline-none transition read-only:cursor-text read-only:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-600";
 
 const iconButtonClass =
   "inline-flex size-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40";
+
+const filterFieldClass =
+  "grid gap-1 text-sm font-medium text-slate-700";
 
 function emptyValue(value: string | null | undefined): string {
   return value ?? "";
@@ -93,66 +108,6 @@ function StatusMessage({ state }: { state: ActionState }) {
   );
 }
 
-function SearchIcon() {
-  return (
-    <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24">
-      <path
-        d="m21 21-4.2-4.2m1.2-5.3a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24">
-      <path
-        d="M12 5v14M5 12h14"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24">
-      <path
-        d="m6 6 12 12M18 6 6 18"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
-function ChevronIcon({ direction }: { direction: "left" | "right" }) {
-  const path = direction === "left" ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6";
-
-  return (
-    <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24">
-      <path
-        d={path}
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
 function buildPageHref(filters: KpiGridFilters, page: number): string {
   const params = new URLSearchParams();
 
@@ -160,12 +115,8 @@ function buildPageHref(filters: KpiGridFilters, page: number): string {
     params.set("q", filters.keyword);
   }
 
-  if (filters.status !== "all") {
-    params.set("status", filters.status);
-  }
-
-  if (filters.kpiType) {
-    params.set("type", filters.kpiType);
+  if (filters.department) {
+    params.set("department", filters.department);
   }
 
   if (filters.pageSize !== 10) {
@@ -186,7 +137,6 @@ function displayText(value: string | null | undefined, fallback = "-") {
 }
 
 export function KpiTemplateClient({
-  deleteAction,
   departments,
   filters,
   grid,
@@ -209,19 +159,6 @@ export function KpiTemplateClient({
     },
     initialActionState,
   );
-  const [deleteState, deleteFormAction, isDeleting] = useActionState(
-    async (prevState: ActionState, formData: FormData) => {
-      const result = await deleteAction(prevState, formData);
-
-      if (result.status === "success") {
-        setModalMode(null);
-        setSelectedId(null);
-      }
-
-      return result;
-    },
-    initialActionState,
-  );
 
   const selectedDetail = useMemo(
     () =>
@@ -230,12 +167,14 @@ export function KpiTemplateClient({
         : grid.rows.find((row) => row.topic.id === selectedId) ?? null,
     [grid.rows, selectedId],
   );
-  const modalDetail = modalMode === "edit" ? selectedDetail : null;
+  const modalDetail =
+    modalMode === "edit" || modalMode === "view" ? selectedDetail : null;
+  const isReadOnly = modalMode === "view";
   const selectedTypeIds = new Set(modalDetail?.topic.kpi_type ?? []);
   const modalKey = modalDetail
-    ? `kpi-${modalDetail.topic.id}`
+    ? `${modalMode}-kpi-${modalDetail.topic.id}`
     : `new-${newVersion}`;
-  const activeState = deleteState.message ? deleteState : saveState;
+  const activeState = saveState;
   const firstRecord =
     grid.total === 0 ? 0 : (grid.page - 1) * grid.pageSize + 1;
   const lastRecord = Math.min(grid.total, grid.page * grid.pageSize);
@@ -246,30 +185,55 @@ export function KpiTemplateClient({
     setNewVersion((value) => value + 1);
   }
 
-  function openEditModal(detail: KpiDetail) {
+  async function openEditModal(detail: KpiDetail) {
+    const result = await Swal.fire({
+      title: "กรอกรหัสผ่าน",
+      input: "password",
+      inputPlaceholder: "Password",
+      showCancelButton: true,
+      confirmButtonText: "ตกลง",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#047857",
+      cancelButtonColor: "#475569",
+      preConfirm: (password) => {
+        if (password !== "112233") {
+          Swal.showValidationMessage("รหัสผ่านไม่ถูกต้อง");
+          return false;
+        }
+
+        return password;
+      },
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
     setSelectedId(detail.topic.id);
     setModalMode("edit");
   }
 
+  function openViewModal(detail: KpiDetail) {
+    setSelectedId(detail.topic.id);
+    setModalMode("view");
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 text-slate-950">
-      <div className="mx-auto grid min-h-screen w-full max-w-7xl grid-rows-[auto_1fr]">
+      <div className="grid min-h-screen w-full grid-rows-[auto_1fr]">
         <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-2xl font-semibold tracking-normal text-slate-950">
-                จัดการเทมเพลท KPI
+                แนวทางการบันทึกข้อมูลผลการดำเนินงาน
               </h1>
-              <p className="mt-1 text-sm text-slate-500">
-                ตาราง KPI พร้อมตัวกรอง แบ่งหน้า และจัดการข้อมูลจริงในฐานข้อมูล
-              </p>
             </div>
             <button
               className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
               type="button"
               onClick={openCreateModal}
             >
-              <PlusIcon />
+              <Plus aria-hidden="true" className="size-4" />
               เพิ่ม KPI
             </button>
           </div>
@@ -281,79 +245,67 @@ export function KpiTemplateClient({
         <section className="grid gap-4 p-4 sm:p-6">
           <form
             action="/"
-            className="grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-md border border-slate-200 bg-white px-4 py-3 shadow-sm"
             method="get"
           >
             <input name="page" type="hidden" value="1" />
-            <div className="grid gap-3 md:grid-cols-[1fr_160px_180px_140px_auto_auto] md:items-end">
-              <Field label="ค้นหา KPI">
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                    <SearchIcon />
-                  </span>
-                  <input
-                    className={`${inputClass} pl-9`}
-                    defaultValue={filters.keyword}
-                    name="q"
-                    placeholder="ชื่อ KPI"
-                    type="search"
-                  />
-                </div>
-              </Field>
+            <input name="pageSize" type="hidden" value={filters.pageSize} />
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
+              <div className="min-w-0 flex-1">
+                <label className={filterFieldClass}>
+                  <span>ค้นหา KPI</span>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Search aria-hidden="true" className="size-4" />
+                    </span>
+                    <input
+                      className={`${filterInputClass} pl-9`}
+                      defaultValue={filters.keyword}
+                      name="q"
+                      placeholder="ชื่อ KPI"
+                      type="search"
+                    />
+                  </div>
+                </label>
+              </div>
 
-              <Field label="สถานะ">
-                <select
-                  className={inputClass}
-                  defaultValue={filters.status}
-                  name="status"
+              <div className="w-full xl:w-[360px]">
+                <label className={filterFieldClass}>
+                  <span>กลุ่มงาน</span>
+                  <select
+                    className={filterInputClass}
+                    defaultValue={filters.department}
+                    name="department"
+                  >
+                    <option value="">ทั้งหมด</option>
+                    {departments.map((department) => (
+                      <option
+                        key={department.id}
+                        value={department.department_name}
+                      >
+                        {department.department_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-3 xl:justify-end">
+                <button
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  type="submit"
                 >
-                  <option value="all">ทั้งหมด</option>
-                  <option value="active">ใช้งาน</option>
-                  <option value="inactive">ไม่ใช้งาน</option>
-                </select>
-              </Field>
+                  <Search aria-hidden="true" className="size-4" />
+                  ค้นหา
+                </button>
 
-              <Field label="ประเภท KPI">
-                <select
-                  className={inputClass}
-                  defaultValue={filters.kpiType}
-                  name="type"
+                <Link
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  href="/"
                 >
-                  <option value="">ทั้งหมด</option>
-                  {kpiTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.type}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="ต่อหน้า">
-                <select
-                  className={inputClass}
-                  defaultValue={filters.pageSize}
-                  name="pageSize"
-                >
-                  <option value="10">10</option>
-                  <option value="25">25</option>
-                  <option value="50">50</option>
-                </select>
-              </Field>
-
-              <button
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-                type="submit"
-              >
-                <SearchIcon />
-                ค้นหา
-              </button>
-
-              <Link
-                className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                href="/"
-              >
-                ล้างค่า
-              </Link>
+                  ล้างค่า
+                </Link>
+              </div>
             </div>
           </form>
 
@@ -361,28 +313,55 @@ export function KpiTemplateClient({
             <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-base font-semibold text-slate-950">
-                  KPI Datagrid
+                  รายการ KPI
                 </h2>
                 <p className="text-sm text-slate-500">
                   แสดง {firstRecord}-{lastRecord} จาก {grid.total} รายการ
                 </p>
               </div>
-              <span className="text-sm text-slate-500">
-                หน้า {grid.page} / {grid.totalPages}
-              </span>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <span className="text-sm text-slate-500">
+                  หน้า {grid.page} / {grid.totalPages}
+                </span>
+                <form
+                  action="/"
+                  className="flex items-center gap-2"
+                  method="get"
+                >
+                  <input name="page" type="hidden" value="1" />
+                  <input name="q" type="hidden" value={filters.keyword} />
+                  <input
+                    name="department"
+                    type="hidden"
+                    value={filters.department}
+                  />
+                  <select
+                    className={`${filterInputClass} w-24`}
+                    aria-label="ต่อหน้า"
+                    defaultValue={filters.pageSize}
+                    id="grid-page-size"
+                    name="pageSize"
+                    onChange={(event) =>
+                      event.currentTarget.form?.requestSubmit()
+                    }
+                  >
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                  </select>
+                </form>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[920px] border-collapse text-left text-sm">
+              <table className="w-full min-w-[720px] border-collapse text-left text-sm">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
-                    <th className="w-[34%] px-4 py-3">ชื่อ KPI</th>
-                    <th className="px-4 py-3">ประเภท</th>
-                    <th className="px-4 py-3">ผู้รับผิดชอบ</th>
-                    <th className="px-4 py-3">หน่วยงาน</th>
-                    <th className="px-4 py-3">สถานะ</th>
+                    <th className="w-20 px-4 py-3">#</th>
+                    <th className="px-4 py-3">ชื่อ KPI</th>
+                    <th className="w-[24%] px-4 py-3">กลุ่มงาน</th>
                     <th className="px-4 py-3">เอกสาร</th>
-                    <th className="px-4 py-3 text-right">จัดการ</th>
+                    <th className="w-20 px-4 py-3 text-right"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -391,75 +370,48 @@ export function KpiTemplateClient({
                       key={detail.topic.id}
                       className="align-top transition hover:bg-slate-50"
                     >
+                      <td className="px-4 py-3 font-medium text-slate-600">
+                        {detail.topic.id}
+                      </td>
                       <td className="px-4 py-3">
                         <button
                           className="text-left font-semibold text-slate-950 hover:text-emerald-700"
                           type="button"
-                          onClick={() => openEditModal(detail)}
+                          onClick={() => openViewModal(detail)}
                         >
                           {detail.topic.kpi_name}
                         </button>
-                        <div className="mt-1 text-xs text-slate-500">
-                          ID: {detail.topic.id}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-slate-700">
-                        {detail.typeNames.length > 0
-                          ? detail.typeNames.join(", ")
-                          : "-"}
-                      </td>
-                      <td className="px-4 py-3 text-slate-700">
-                        {displayText(detail.pm?.pm_name)}
                       </td>
                       <td className="px-4 py-3 text-slate-700">
                         {displayText(detail.pm?.pm_department)}
                       </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex rounded-sm px-2 py-1 text-xs font-semibold ${
-                            detail.topic.is_active
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-slate-200 text-slate-600"
-                          }`}
-                        >
-                          {detail.topic.is_active ? "ใช้งาน" : "ไม่ใช้งาน"}
-                        </span>
-                      </td>
                       <td className="px-4 py-3 text-slate-700">
-                        {detail.document
-                          ? `${detail.document.doc_name} (${detail.document.doc_type})`
-                          : "-"}
+                        {detail.document?.google_drive_url ? (
+                          <a
+                            className={iconButtonClass}
+                            href={detail.document.google_drive_url}
+                            rel="noreferrer"
+                            target="_blank"
+                            title="เปิดเอกสาร"
+                          >
+                            <FileText aria-hidden="true" className="size-4" />
+                            <span className="sr-only">เปิดเอกสาร</span>
+                          </a>
+                        ) : (
+                          "-"
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
                           <button
-                            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                            className={iconButtonClass}
+                            title="ดู/แก้ไข"
                             type="button"
-                            onClick={() => openEditModal(detail)}
+                            onClick={() => void openEditModal(detail)}
                           >
-                            ดู/แก้ไข
+                            <Pencil aria-hidden="true" className="size-4" />
+                            <span className="sr-only">ดู/แก้ไข</span>
                           </button>
-                          <form
-                            action={deleteFormAction}
-                            onSubmit={(event) => {
-                              if (!window.confirm("ยืนยันการลบ KPI นี้?")) {
-                                event.preventDefault();
-                              }
-                            }}
-                          >
-                            <input
-                              name="id"
-                              type="hidden"
-                              value={detail.topic.id}
-                            />
-                            <button
-                              className="rounded-md border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                              disabled={isDeleting}
-                              type="submit"
-                            >
-                              ลบ
-                            </button>
-                          </form>
                         </div>
                       </td>
                     </tr>
@@ -491,7 +443,7 @@ export function KpiTemplateClient({
               >
                 {grid.page <= 1 ? (
                   <span className={iconButtonClass} aria-disabled="true">
-                    <ChevronIcon direction="left" />
+                    <ChevronLeft aria-hidden="true" className="size-4" />
                   </span>
                 ) : (
                   <Link
@@ -499,7 +451,7 @@ export function KpiTemplateClient({
                     className={iconButtonClass}
                     href={buildPageHref(filters, grid.page - 1)}
                   >
-                    <ChevronIcon direction="left" />
+                    <ChevronLeft aria-hidden="true" className="size-4" />
                   </Link>
                 )}
 
@@ -509,7 +461,7 @@ export function KpiTemplateClient({
 
                 {grid.page >= grid.totalPages ? (
                   <span className={iconButtonClass} aria-disabled="true">
-                    <ChevronIcon direction="right" />
+                    <ChevronRight aria-hidden="true" className="size-4" />
                   </span>
                 ) : (
                   <Link
@@ -517,7 +469,7 @@ export function KpiTemplateClient({
                     className={iconButtonClass}
                     href={buildPageHref(filters, grid.page + 1)}
                   >
-                    <ChevronIcon direction="right" />
+                    <ChevronRight aria-hidden="true" className="size-4" />
                   </Link>
                 )}
               </nav>
@@ -544,9 +496,11 @@ export function KpiTemplateClient({
                     {modalDetail ? "รายละเอียด KPI" : "เพิ่ม KPI ใหม่"}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    {modalDetail
-                      ? `แก้ไขข้อมูลของ ${modalDetail.topic.kpi_name}`
-                      : "กรอกข้อมูลเทมเพลท KPI และบันทึกลงฐานข้อมูล"}
+                    {isReadOnly && modalDetail
+                      ? `ดูรายละเอียดของ ${modalDetail.topic.kpi_name}`
+                      : modalDetail
+                        ? `แก้ไขข้อมูลของ ${modalDetail.topic.kpi_name}`
+                        : "กรอกข้อมูลเทมเพลท KPI และบันทึกลงฐานข้อมูล"}
                   </p>
                 </div>
                 <button
@@ -555,7 +509,7 @@ export function KpiTemplateClient({
                   type="button"
                   onClick={() => setModalMode(null)}
                 >
-                  <CloseIcon />
+                  <X aria-hidden="true" className="size-4" />
                 </button>
               </div>
             </header>
@@ -566,13 +520,15 @@ export function KpiTemplateClient({
                   <input name="id" type="hidden" value={modalDetail.topic.id} />
                 ) : null}
 
-                <FormSection title="ข้อมูล KPI">
-                  <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-6">
+                <FormSection title="แนวทางการบันทึกข้อมูล">
+                  <div className="grid gap-4 md:grid-cols-[minmax(0,10fr)_minmax(160px,2fr)]">
                     <Field label="ชื่อ KPI">
                       <input
                         className={inputClass}
                         defaultValue={modalDetail?.topic.kpi_name ?? ""}
                         name="kpi_name"
+                        readOnly={isReadOnly}
                         required
                       />
                     </Field>
@@ -582,6 +538,7 @@ export function KpiTemplateClient({
                         <input
                           className="size-4 accent-emerald-700"
                           defaultChecked={modalDetail?.topic.is_active ?? true}
+                          disabled={isReadOnly}
                           name="is_active"
                           type="checkbox"
                         />
@@ -606,6 +563,7 @@ export function KpiTemplateClient({
                             <input
                               className="size-4 accent-emerald-700"
                               defaultChecked={selectedTypeIds.has(value)}
+                              disabled={isReadOnly}
                               name="kpi_type"
                               type="checkbox"
                               value={value}
@@ -618,31 +576,28 @@ export function KpiTemplateClient({
                   </div>
                 </FormSection>
 
-                <FormSection title="กลุ่มเป้าหมาย">
+                <FormSection title="วิธีการระบุกลุ่มเป้าหมาย">
                   <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="ประเภทพื้นที่เป้าหมาย">
-                      <select
+                    <Field label="ประเภทการอยู่อาศัย (TYPE AREA)">
+                      <input
                         className={inputClass}
                         defaultValue={emptyValue(
                           modalDetail?.template?.target_area_type,
                         )}
                         name="target_area_type"
-                      >
-                        <option value="">ไม่ระบุ</option>
-                        <option value="Province">จังหวัด</option>
-                        <option value="District">อำเภอ</option>
-                        <option value="Hospital">โรงพยาบาล</option>
-                        <option value="Department">หน่วยงาน</option>
-                      </select>
+                        placeholder="กรอก type area = 1,2,3,4,5"
+                        readOnly={isReadOnly}
+                      />
                     </Field>
 
-                    <Field label="เพศเป้าหมาย">
+                    <Field label="เพศ">
                       <select
                         className={inputClass}
                         defaultValue={emptyValue(
                           modalDetail?.template?.target_gender,
                         )}
                         name="target_gender"
+                        disabled={isReadOnly}
                       >
                         <option value="">ทั้งหมด</option>
                         <option value="Female">หญิง</option>
@@ -651,7 +606,7 @@ export function KpiTemplateClient({
                       </select>
                     </Field>
 
-                    <Field label="ช่วงอายุเป้าหมาย">
+                    <Field label="ช่วงอายุ">
                       <input
                         className={inputClass}
                         defaultValue={emptyValue(
@@ -659,30 +614,45 @@ export function KpiTemplateClient({
                         )}
                         name="target_age_range"
                         placeholder="เช่น 30-60"
+                        readOnly={isReadOnly}
                       />
                     </Field>
 
-                    <Field label="เป้าหมายอื่น ๆ">
+                    <Field label="ได้รับการวินิจฉัยก่อนหน้า เช่น เบาหวาน ความดัน">
                       <input
                         className={inputClass}
+                        defaultValue={emptyValue(
+                          modalDetail?.template?.target_previous_diag,
+                        )}
+                        name="target_previous_diag"
+                        placeholder="ระบุ ICD10"
+                        readOnly={isReadOnly}
+                      />
+                    </Field>
+
+                    <Field label="เงื่อนไขอื่นๆ">
+                      <textarea
+                        className={textareaClass}
                         defaultValue={emptyValue(
                           modalDetail?.template?.target_other,
                         )}
                         name="target_other"
+                        readOnly={isReadOnly}
                       />
                     </Field>
                   </div>
                 </FormSection>
 
-                <FormSection title="ข้อมูลสำหรับบันทึกผลงาน">
+                <FormSection title="วิธีการบันทึกผลงาน">
                   <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="INSCL">
+                    <Field label="สิทธิรักษา">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
                           modalDetail?.template?.data_entry_inscl,
                         )}
                         name="data_entry_inscl"
+                        readOnly={isReadOnly}
                       />
                     </Field>
 
@@ -693,6 +663,7 @@ export function KpiTemplateClient({
                           modalDetail?.template?.data_entry_diag,
                         )}
                         name="data_entry_diag"
+                        readOnly={isReadOnly}
                       />
                     </Field>
 
@@ -703,6 +674,7 @@ export function KpiTemplateClient({
                           modalDetail?.template?.data_entry_procedure,
                         )}
                         name="data_entry_procedure"
+                        readOnly={isReadOnly}
                       />
                     </Field>
 
@@ -713,16 +685,18 @@ export function KpiTemplateClient({
                           modalDetail?.template?.data_entry_drug,
                         )}
                         name="data_entry_drug"
+                        readOnly={isReadOnly}
                       />
                     </Field>
 
-                    <Field label="แล็บ">
+                    <Field label="ผลการตรวจทางห้องปฏิบัติการ">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
                           modalDetail?.template?.data_entry_lab,
                         )}
                         name="data_entry_lab"
+                        readOnly={isReadOnly}
                       />
                     </Field>
 
@@ -733,20 +707,31 @@ export function KpiTemplateClient({
                           modalDetail?.template?.data_entry_special_pp,
                         )}
                         name="data_entry_special_pp"
+                        readOnly={isReadOnly}
                       />
                     </Field>
 
-                    <div className="md:col-span-2">
-                      <Field label="ข้อมูลอื่น ๆ">
-                        <textarea
-                          className={textareaClass}
-                          defaultValue={emptyValue(
-                            modalDetail?.template?.data_entry_other,
-                          )}
-                          name="data_entry_other"
-                        />
-                      </Field>
-                    </div>
+                    <Field label="วัคซีน">
+                      <textarea
+                        className={textareaClass}
+                        defaultValue={emptyValue(
+                          modalDetail?.template?.data_entry_vaccine,
+                        )}
+                        name="data_entry_vaccine"
+                        readOnly={isReadOnly}
+                      />
+                    </Field>
+
+                    <Field label="อื่นๆ">
+                      <textarea
+                        className={textareaClass}
+                        defaultValue={emptyValue(
+                          modalDetail?.template?.data_entry_other,
+                        )}
+                        name="data_entry_other"
+                        readOnly={isReadOnly}
+                      />
+                    </Field>
                   </div>
                 </FormSection>
 
@@ -757,6 +742,7 @@ export function KpiTemplateClient({
                         className={inputClass}
                         defaultValue={modalDetail?.pm?.pm_name ?? ""}
                         name="pm_name"
+                        readOnly={isReadOnly}
                       />
                     </Field>
 
@@ -765,6 +751,7 @@ export function KpiTemplateClient({
                         className={inputClass}
                         defaultValue={emptyValue(modalDetail?.pm?.pm_position)}
                         name="pm_position"
+                        readOnly={isReadOnly}
                       />
                     </Field>
 
@@ -775,6 +762,7 @@ export function KpiTemplateClient({
                           modalDetail?.pm?.pm_department,
                         )}
                         name="pm_department"
+                        disabled={isReadOnly}
                       >
                         <option value="">ไม่ระบุ</option>
                         {departments.map((department) => (
@@ -791,42 +779,22 @@ export function KpiTemplateClient({
                 </FormSection>
 
                 <FormSection title="เอกสารอ้างอิง">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <Field label="ชื่อเอกสาร">
-                      <input
-                        className={inputClass}
-                        defaultValue={modalDetail?.document?.doc_name ?? ""}
-                        name="doc_name"
-                      />
-                    </Field>
-
-                    <Field label="ประเภทเอกสาร">
-                      <select
-                        className={inputClass}
-                        defaultValue={modalDetail?.document?.doc_type ?? ""}
-                        name="doc_type"
-                      >
-                        <option value="">ไม่ระบุ</option>
-                        <option value="PDF">PDF</option>
-                        <option value="DOC">DOC</option>
-                        <option value="XLS">XLS</option>
-                        <option value="URL">URL</option>
-                        <option value="Other">อื่น ๆ</option>
-                      </select>
-                    </Field>
-
-                    <Field label="ตำแหน่งไฟล์">
+                  <div className="grid gap-4">
+                    <Field label="URL Google Drive">
                       <input
                         className={inputClass}
                         defaultValue={emptyValue(
-                          modalDetail?.document?.file_path,
+                          modalDetail?.document?.google_drive_url,
                         )}
-                        name="file_path"
-                        placeholder="/docs/example.pdf"
+                        name="google_drive_url"
+                        placeholder="https://drive.google.com/..."
+                        readOnly={isReadOnly}
+                        type="url"
                       />
                     </Field>
                   </div>
                 </FormSection>
+                </div>
               </div>
             </div>
 
@@ -837,15 +805,17 @@ export function KpiTemplateClient({
                   type="button"
                   onClick={() => setModalMode(null)}
                 >
-                  ยกเลิก
+                  {isReadOnly ? "ปิด" : "ยกเลิก"}
                 </button>
-                <button
-                  className="min-h-10 rounded-md bg-emerald-700 px-5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-                  disabled={isSaving}
-                  type="submit"
-                >
-                  {isSaving ? "กำลังบันทึก..." : "บันทึก"}
-                </button>
+                {isReadOnly ? null : (
+                  <button
+                    className="min-h-10 rounded-md bg-emerald-700 px-5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                    disabled={isSaving}
+                    type="submit"
+                  >
+                    {isSaving ? "กำลังบันทึก..." : "บันทึก"}
+                  </button>
+                )}
               </div>
             </footer>
           </form>

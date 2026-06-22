@@ -8,6 +8,7 @@ const optionalFields = [
   "target_area_type",
   "target_gender",
   "target_age_range",
+  "target_previous_diag",
   "target_other",
   "data_entry_inscl",
   "data_entry_diag",
@@ -15,6 +16,7 @@ const optionalFields = [
   "data_entry_drug",
   "data_entry_lab",
   "data_entry_special_pp",
+  "data_entry_vaccine",
   "data_entry_other",
 ] as const;
 
@@ -47,6 +49,19 @@ function getKpiTypes(formData: FormData): string[] {
     .filter(Boolean);
 }
 
+function isGoogleDriveUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "drive.google.com" ||
+        url.hostname.endsWith(".drive.google.com"))
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function parseKpiTemplateForm(formData: FormData): ParseKpiTemplateFormResult {
   const kpiName = getTrimmedString(formData, "kpi_name");
 
@@ -57,15 +72,19 @@ export function parseKpiTemplateForm(formData: FormData): ParseKpiTemplateFormRe
     };
   }
 
-  const docName = getTrimmedString(formData, "doc_name");
-  const docType = getTrimmedString(formData, "doc_type");
-  const filePath = getNullableString(formData, "file_path");
-  const hasDocument = Boolean(docName || docType || filePath);
+  const googleDriveUrl = getNullableString(formData, "google_drive_url");
+  const document = googleDriveUrl
+    ? {
+        doc_name: "Google Drive",
+        doc_type: "URL",
+        google_drive_url: googleDriveUrl,
+      }
+    : null;
 
-  if (hasDocument && (!docName || !docType)) {
+  if (googleDriveUrl && !isGoogleDriveUrl(googleDriveUrl)) {
     return {
       ok: false,
-      message: "กรุณาระบุชื่อเอกสารและประเภทเอกสาร",
+      message: "กรุณาระบุ URL Google Drive เท่านั้น",
     };
   }
 
@@ -88,13 +107,7 @@ export function parseKpiTemplateForm(formData: FormData): ParseKpiTemplateFormRe
         pm_position: getNullableString(formData, "pm_position"),
         pm_department: getNullableString(formData, "pm_department"),
       },
-      document: hasDocument
-        ? {
-            doc_name: docName,
-            doc_type: docType,
-            file_path: filePath,
-          }
-        : null,
+      document,
     },
   };
 }

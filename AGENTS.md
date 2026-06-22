@@ -1,5 +1,9 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+## RULE
+- Don not build and deploy  if user not ask.
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+## Database tool
+-use `db-cli` skill to  manipulate database  read db config from @.env
+
+
+## Deployment
+read @deploy.md
