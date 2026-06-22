@@ -53,7 +53,7 @@ export function parseKpiTemplateForm(formData: FormData): ParseKpiTemplateFormRe
   if (!kpiName) {
     return {
       ok: false,
-      message: "KPI name is required.",
+      message: "กรุณาระบุชื่อ KPI",
     };
   }
 
@@ -65,7 +65,7 @@ export function parseKpiTemplateForm(formData: FormData): ParseKpiTemplateFormRe
   if (hasDocument && (!docName || !docType)) {
     return {
       ok: false,
-      message: "Document name and type are required when adding a document.",
+      message: "กรุณาระบุชื่อเอกสารและประเภทเอกสาร",
     };
   }
 

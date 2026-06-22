@@ -41,17 +41,15 @@ function formDataWithId(id: string): FormData {
 
 function createTransaction(topicRows: { id: number }[] = [{ id: 12 }]) {
   const queries: string[] = [];
-  const tx = vi.fn(
-    async <T,>(strings: TemplateStringsArray): Promise<T> => {
-      queries.push(strings[0]);
+  const tx = vi.fn(async <T,>(strings: TemplateStringsArray): Promise<T> => {
+    queries.push(strings[0]);
 
-      if (strings[0].includes("DELETE FROM kpi_topic")) {
-        return topicRows as T;
-      }
+    if (strings[0].includes("DELETE FROM kpi_topic")) {
+      return topicRows as T;
+    }
 
-      return [] as T;
-    },
-  ) as TransactionTag;
+    return [] as T;
+  }) as TransactionTag;
 
   return { queries, tx };
 }

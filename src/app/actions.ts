@@ -151,14 +151,13 @@ export async function saveKpiTemplate(
 
     return {
       status: "success",
-      message: "KPI template saved.",
+      message: "บันทึกเทมเพลท KPI สำเร็จ",
       selectedId: topicId,
     };
-  } catch (error) {
+  } catch {
     return {
       status: "error",
-      message:
-        error instanceof Error ? error.message : "Failed to save KPI template.",
+      message: "บันทึกเทมเพลท KPI ไม่สำเร็จ",
     };
   }
 }

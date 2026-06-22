@@ -9,7 +9,7 @@ describe("parseKpiTemplateForm", () => {
 
     expect(parseKpiTemplateForm(formData)).toEqual({
       ok: false,
-      message: "KPI name is required.",
+      message: "กรุณาระบุชื่อ KPI",
     });
   });
 
@@ -97,7 +97,7 @@ describe("parseKpiTemplateForm", () => {
 
     expect(parseKpiTemplateForm(formData)).toEqual({
       ok: false,
-      message: "Document name and type are required when adding a document.",
+      message: "กรุณาระบุชื่อเอกสารและประเภทเอกสาร",
     });
   });
 });
