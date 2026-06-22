@@ -1,22 +1,22 @@
-export type DepartmentOption = {
+export interface CDepartmentModel {
   id: number;
   department_name: string;
   is_active: boolean;
-};
+}
 
-export type KpiTypeOption = {
+export interface CKpiTypeModel {
   id: number;
   type: string;
-};
+}
 
-export type KpiTopic = {
+export interface KpiTopicModel {
   id: number;
   kpi_name: string;
   is_active: boolean;
   kpi_type: string[] | null;
-};
+}
 
-export type KpiTemplate = {
+export interface KpiTemplateModel {
   id: number;
   kpi_topic_id: number;
   target_area_type: string | null;
@@ -30,24 +30,36 @@ export type KpiTemplate = {
   data_entry_lab: string | null;
   data_entry_special_pp: string | null;
   data_entry_other: string | null;
-};
+}
 
-export type KpiPm = {
+export interface KpiPmModel {
   id: number;
   kpi_topic_id: number;
   pm_name: string;
   pm_position: string | null;
   pm_department: string | null;
-};
+}
 
-export type KpiDocument = {
+export interface KpiDocModel {
   id: number;
   kpi_topic_id: number;
   doc_name: string;
   doc_type: string;
   file_path: string | null;
   created_at: string | null;
-};
+}
+
+export type DepartmentOption = CDepartmentModel;
+
+export type KpiTypeOption = CKpiTypeModel;
+
+export type KpiTopic = KpiTopicModel;
+
+export type KpiTemplate = KpiTemplateModel;
+
+export type KpiPm = KpiPmModel;
+
+export type KpiDocument = KpiDocModel;
 
 export type KpiDetail = {
   topic: KpiTopic;
