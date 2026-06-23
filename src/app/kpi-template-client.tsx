@@ -189,6 +189,15 @@ export function KpiTemplateClient({
       if (result.status === "success") {
         setModalMode(null);
         setSelectedId(result.selectedId ?? null);
+        void Swal.fire({
+          icon: "success",
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 1800,
+          timerProgressBar: true,
+          title: "สำเร็จ",
+          toast: true,
+        });
       }
 
       return result;
