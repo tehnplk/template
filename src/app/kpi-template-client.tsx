@@ -1,14 +1,20 @@
 "use client";
 
 import {
+  BookOpenText,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
+  Database,
   FileText,
   Pencil,
   Plus,
   Search,
+  Target,
+  UserRound,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import Swal from "sweetalert2";
 import { useActionState, useMemo, useState } from "react";
@@ -43,13 +49,13 @@ const initialActionState: ActionState = {
 };
 
 const inputClass =
-  "min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition read-only:cursor-text read-only:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-600";
+  "min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-blue-700 outline-none transition read-only:cursor-text read-only:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-600";
 
 const filterInputClass =
-  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
+  "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-blue-700 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
 
 const textareaClass =
-  "min-h-24 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-sm leading-6 text-slate-950 outline-none transition read-only:cursor-text read-only:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-600";
+  "min-h-24 w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-sm leading-6 text-blue-700 outline-none transition read-only:cursor-text read-only:bg-slate-50 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-600";
 
 const iconButtonClass =
   "inline-flex size-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40";
@@ -76,16 +82,46 @@ function Field({
   );
 }
 
-function FormSection({
+function InlineField({
   children,
-  title,
+  label,
 }: {
   children: ReactNode;
+  label: string;
+}) {
+  return (
+    <label className="grid grid-cols-[minmax(120px,38%)_minmax(0,1fr)] items-start gap-3 text-sm font-medium text-slate-700">
+      <span className="pt-2 text-right">{label} :</span>
+      {children}
+    </label>
+  );
+}
+
+function FormSection({
+  action,
+  children,
+  icon: Icon,
+  title,
+}: {
+  action?: ReactNode;
+  children: ReactNode;
+  icon?: LucideIcon;
   title: string;
 }) {
   return (
     <section className="grid gap-4 border-t border-slate-200 pt-5">
-      <h3 className="text-base font-semibold text-slate-950">{title}</h3>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-slate-950">
+          {Icon ? (
+            <Icon
+              aria-hidden="true"
+              className="size-5 shrink-0 text-blue-700"
+            />
+          ) : null}
+          <span>{title}</span>
+        </h3>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
       {children}
     </section>
   );
@@ -493,7 +529,7 @@ export function KpiTemplateClient({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-semibold text-slate-950">
-                    {modalDetail ? "รายละเอียด KPI" : "เพิ่ม KPI ใหม่"}
+                    แนวทางการบันทึกข้อมูล
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     {isReadOnly && modalDetail
@@ -521,20 +557,10 @@ export function KpiTemplateClient({
                 ) : null}
 
                 <div className="grid gap-6">
-                <FormSection title="แนวทางการบันทึกข้อมูล">
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,10fr)_minmax(160px,2fr)]">
-                    <Field label="ชื่อ KPI">
-                      <input
-                        className={inputClass}
-                        defaultValue={modalDetail?.topic.kpi_name ?? ""}
-                        name="kpi_name"
-                        readOnly={isReadOnly}
-                        required
-                      />
-                    </Field>
-
-                    <Field label="สถานะ">
-                      <label className="flex min-h-10 items-center gap-3 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700">
+                  <FormSection
+                    action={
+                      <label className="flex min-h-9 items-center gap-3 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700">
+                        <span>สถานะ</span>
                         <input
                           className="size-4 accent-emerald-700"
                           defaultChecked={modalDetail?.topic.is_active ?? true}
@@ -542,43 +568,56 @@ export function KpiTemplateClient({
                           name="is_active"
                           type="checkbox"
                         />
-                        ใช้งาน
+                        <span>ใช้งาน</span>
                       </label>
-                    </Field>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <span className="text-sm font-medium text-slate-700">
-                      ประเภท KPI
-                    </span>
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      {kpiTypes.map((type) => {
-                        const value = String(type.id);
-
-                        return (
-                          <label
-                            key={type.id}
-                            className="flex min-h-10 items-center gap-3 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700"
-                          >
-                            <input
-                              className="size-4 accent-emerald-700"
-                              defaultChecked={selectedTypeIds.has(value)}
-                              disabled={isReadOnly}
-                              name="kpi_type"
-                              type="checkbox"
-                              value={value}
-                            />
-                            {type.type}
-                          </label>
-                        );
-                      })}
+                    }
+                    icon={ClipboardList}
+                    title="ชื่อตัวชี้วัดผลงาน"
+                  >
+                    <div className="grid gap-4">
+                      <Field label="ชื่อ KPI">
+                        <input
+                          className={inputClass}
+                          defaultValue={modalDetail?.topic.kpi_name ?? ""}
+                          name="kpi_name"
+                          readOnly={isReadOnly}
+                          required
+                        />
+                      </Field>
                     </div>
-                  </div>
-                </FormSection>
 
-                <FormSection title="วิธีการระบุกลุ่มเป้าหมาย">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="ประเภทการอยู่อาศัย (TYPE AREA)">
+                    <div className="grid gap-2">
+                      <span className="text-sm font-medium text-slate-700">
+                        ประเภท KPI
+                      </span>
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {kpiTypes.map((type) => {
+                          const value = String(type.id);
+
+                          return (
+                            <label
+                              key={type.id}
+                              className="flex min-h-10 items-center gap-3 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700"
+                            >
+                              <input
+                                className="size-4 accent-emerald-700"
+                                defaultChecked={selectedTypeIds.has(value)}
+                                disabled={isReadOnly}
+                                name="kpi_type"
+                                type="checkbox"
+                                value={value}
+                              />
+                              {type.type}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </FormSection>
+
+                <FormSection icon={Target} title="วิธีการระบุกลุ่มเป้าหมาย">
+                  <div className="grid gap-3">
+                    <InlineField label="ประเภทการอยู่อาศัย (TYPE AREA)">
                       <input
                         className={inputClass}
                         defaultValue={emptyValue(
@@ -588,9 +627,9 @@ export function KpiTemplateClient({
                         placeholder="กรอก type area = 1,2,3,4,5"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="เพศ">
+                    <InlineField label="เพศ">
                       <select
                         className={inputClass}
                         defaultValue={emptyValue(
@@ -604,9 +643,9 @@ export function KpiTemplateClient({
                         <option value="Male">ชาย</option>
                         <option value="Other">อื่น ๆ</option>
                       </select>
-                    </Field>
+                    </InlineField>
 
-                    <Field label="ช่วงอายุ">
+                    <InlineField label="ช่วงอายุ">
                       <input
                         className={inputClass}
                         defaultValue={emptyValue(
@@ -616,9 +655,9 @@ export function KpiTemplateClient({
                         placeholder="เช่น 30-60"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="ได้รับการวินิจฉัยก่อนหน้า เช่น เบาหวาน ความดัน">
+                    <InlineField label="ได้รับการวินิจฉัยก่อนหน้า เช่น เบาหวาน ความดัน">
                       <input
                         className={inputClass}
                         defaultValue={emptyValue(
@@ -628,9 +667,9 @@ export function KpiTemplateClient({
                         placeholder="ระบุ ICD10"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="เงื่อนไขอื่นๆ">
+                    <InlineField label="เงื่อนไขอื่นๆ">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
@@ -639,13 +678,16 @@ export function KpiTemplateClient({
                         name="target_other"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
                   </div>
                 </FormSection>
 
-                <FormSection title="วิธีการบันทึกผลงาน">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="สิทธิรักษา">
+                <FormSection
+                  icon={Database}
+                  title="วิธีการบันทึกผลงานเข้าระบบ HIS"
+                >
+                  <div className="grid gap-3">
+                    <InlineField label="สิทธิรักษาที่ต้องลง">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
@@ -654,9 +696,9 @@ export function KpiTemplateClient({
                         name="data_entry_inscl"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="วินิจฉัย">
+                    <InlineField label="รหัสวินิจฉัยที่ต้องลง">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
@@ -665,9 +707,9 @@ export function KpiTemplateClient({
                         name="data_entry_diag"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="หัตถการ">
+                    <InlineField label="หัตถการที่ต้องลง">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
@@ -676,9 +718,9 @@ export function KpiTemplateClient({
                         name="data_entry_procedure"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="ยา">
+                    <InlineField label="รายการยาที่ต้องลง">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
@@ -687,9 +729,9 @@ export function KpiTemplateClient({
                         name="data_entry_drug"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="ผลการตรวจทางห้องปฏิบัติการ">
+                    <InlineField label="ผล LAB ที่ต้องลง">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
@@ -698,9 +740,9 @@ export function KpiTemplateClient({
                         name="data_entry_lab"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="Special PP">
+                    <InlineField label="รหัส Special PP ที่ต้องลง">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
@@ -709,9 +751,9 @@ export function KpiTemplateClient({
                         name="data_entry_special_pp"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="วัคซีน">
+                    <InlineField label="รหัสวัคซีนที่ต้องลง">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
@@ -720,9 +762,9 @@ export function KpiTemplateClient({
                         name="data_entry_vaccine"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
 
-                    <Field label="อื่นๆ">
+                    <InlineField label="ข้อมูลอื่นๆ ที่ต้องลง เพื่อให้เกิดผลงาน">
                       <textarea
                         className={textareaClass}
                         defaultValue={emptyValue(
@@ -731,11 +773,26 @@ export function KpiTemplateClient({
                         name="data_entry_other"
                         readOnly={isReadOnly}
                       />
-                    </Field>
+                    </InlineField>
                   </div>
                 </FormSection>
 
-                <FormSection title="ผู้รับผิดชอบ">
+                <FormSection icon={BookOpenText} title="เอกสารที่เกี่ยวข้อง">
+                  <div className="grid gap-4">
+                    <input
+                      className={inputClass}
+                      defaultValue={emptyValue(
+                        modalDetail?.document?.google_drive_url,
+                      )}
+                      name="google_drive_url"
+                      placeholder="https://drive.google.com/..."
+                      readOnly={isReadOnly}
+                      type="url"
+                    />
+                  </div>
+                </FormSection>
+
+                <FormSection icon={UserRound} title="ผู้รับผิดชอบ">
                   <div className="grid gap-4 md:grid-cols-3">
                     <Field label="ชื่อผู้รับผิดชอบ">
                       <input
@@ -755,7 +812,7 @@ export function KpiTemplateClient({
                       />
                     </Field>
 
-                    <Field label="หน่วยงาน">
+                    <Field label="กลุ่มงาน">
                       <select
                         className={inputClass}
                         defaultValue={emptyValue(
@@ -774,23 +831,6 @@ export function KpiTemplateClient({
                           </option>
                         ))}
                       </select>
-                    </Field>
-                  </div>
-                </FormSection>
-
-                <FormSection title="เอกสารอ้างอิง">
-                  <div className="grid gap-4">
-                    <Field label="URL Google Drive">
-                      <input
-                        className={inputClass}
-                        defaultValue={emptyValue(
-                          modalDetail?.document?.google_drive_url,
-                        )}
-                        name="google_drive_url"
-                        placeholder="https://drive.google.com/..."
-                        readOnly={isReadOnly}
-                        type="url"
-                      />
                     </Field>
                   </div>
                 </FormSection>
