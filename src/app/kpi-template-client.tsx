@@ -17,7 +17,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import Swal from "sweetalert2";
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ActionState,
@@ -182,6 +182,7 @@ export function KpiTemplateClient({
   const [modalMode, setModalMode] = useState<ModalMode | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [newVersion, setNewVersion] = useState(0);
+  const filterSubmitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saveState, saveFormAction, isSaving] = useActionState(
     async (prevState: ActionState, formData: FormData) => {
       const result = await saveAction(prevState, formData);
@@ -263,6 +264,25 @@ export function KpiTemplateClient({
     setModalMode("view");
   }
 
+  function submitFilterForm(form: HTMLFormElement | null, delay = 0) {
+    if (!form) {
+      return;
+    }
+
+    if (filterSubmitTimer.current) {
+      clearTimeout(filterSubmitTimer.current);
+    }
+
+    if (delay > 0) {
+      filterSubmitTimer.current = setTimeout(() => {
+        form.requestSubmit();
+      }, delay);
+      return;
+    }
+
+    form.requestSubmit();
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 text-slate-950">
       <div className="grid min-h-screen w-full grid-rows-[auto_1fr]">
@@ -309,6 +329,9 @@ export function KpiTemplateClient({
                       name="q"
                       placeholder="ชื่อ KPI"
                       type="search"
+                      onChange={(event) =>
+                        submitFilterForm(event.currentTarget.form, 500)
+                      }
                     />
                   </div>
                 </label>
@@ -321,6 +344,9 @@ export function KpiTemplateClient({
                     className={filterInputClass}
                     defaultValue={filters.department}
                     name="department"
+                    onChange={(event) =>
+                      submitFilterForm(event.currentTarget.form)
+                    }
                   >
                     <option value="">ทั้งหมด</option>
                     {departments.map((department) => (
@@ -333,23 +359,6 @@ export function KpiTemplateClient({
                     ))}
                   </select>
                 </label>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-3 xl:justify-end">
-                <button
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-                  type="submit"
-                >
-                  <Search aria-hidden="true" className="size-4" />
-                  ค้นหา
-                </button>
-
-                <Link
-                  className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  href="/"
-                >
-                  ล้างค่า
-                </Link>
               </div>
             </div>
           </form>
@@ -420,7 +429,7 @@ export function KpiTemplateClient({
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          className="text-left font-semibold text-slate-950 hover:text-emerald-700"
+                          className="cursor-pointer text-left font-semibold text-slate-950 hover:text-emerald-700"
                           type="button"
                           onClick={() => openViewModal(detail)}
                         >
