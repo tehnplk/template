@@ -533,7 +533,7 @@ export function KpiTemplateClient({
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     {isReadOnly && modalDetail
-                      ? `ดูรายละเอียดของ ${modalDetail.topic.kpi_name}`
+                      ? modalDetail.topic.kpi_name
                       : modalDetail
                         ? `แก้ไขข้อมูลของ ${modalDetail.topic.kpi_name}`
                         : "กรอกข้อมูลเทมเพลท KPI และบันทึกลงฐานข้อมูล"}
@@ -684,7 +684,7 @@ export function KpiTemplateClient({
 
                 <FormSection
                   icon={Database}
-                  title="วิธีการบันทึกผลงานเข้าระบบ HIS"
+                  title="วิธีการบันทึกผลงานใน HIS"
                 >
                   <div className="grid gap-3">
                     <InlineField label="สิทธิรักษาที่ต้องลง">
