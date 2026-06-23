@@ -242,7 +242,7 @@ export function KpiTemplateClient({
           </div>
         </header>
 
-        <section className="grid gap-4 p-4 sm:p-6">
+        <section className="grid content-start gap-4 p-4 sm:p-6">
           <form
             action="/"
             className="rounded-md border border-slate-200 bg-white px-4 py-3 shadow-sm"
