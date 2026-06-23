@@ -8,3 +8,6 @@
 
 ## Deployment
 read @deploy.md  if user ask for deploy
+
+## Git
+always commit and push this file
