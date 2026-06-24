@@ -541,7 +541,7 @@ export function KpiTemplateClient({
           <form
             key={modalKey}
             action={saveFormAction}
-            className="grid h-dvh grid-rows-[auto_1fr_auto]"
+            className="grid h-dvh grid-rows-[auto_1fr]"
           >
             <header className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
               <div className="flex items-start justify-between gap-4">
@@ -853,29 +853,27 @@ export function KpiTemplateClient({
                   </div>
                 </FormSection>
                 </div>
+
+                <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-end">
+                  <button
+                    className="min-h-10 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    type="button"
+                    onClick={() => setModalMode(null)}
+                  >
+                    {isReadOnly ? "ปิด" : "ยกเลิก"}
+                  </button>
+                  {isReadOnly ? null : (
+                    <button
+                      className="min-h-10 rounded-md bg-emerald-700 px-5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                      disabled={isSaving}
+                      type="submit"
+                    >
+                      {isSaving ? "กำลังบันทึก..." : "บันทึก"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-
-            <footer className="border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
-              <div className="mx-auto flex max-w-6xl flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
-                <button
-                  className="min-h-10 rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  type="button"
-                  onClick={() => setModalMode(null)}
-                >
-                  {isReadOnly ? "ปิด" : "ยกเลิก"}
-                </button>
-                {isReadOnly ? null : (
-                  <button
-                    className="min-h-10 rounded-md bg-emerald-700 px-5 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-                    disabled={isSaving}
-                    type="submit"
-                  >
-                    {isSaving ? "กำลังบันทึก..." : "บันทึก"}
-                  </button>
-                )}
-              </div>
-            </footer>
           </form>
         </div>
       ) : null}
