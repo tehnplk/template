@@ -62,7 +62,7 @@ export default async function Home({
       FROM kpi_topic
       WHERE kpi_name ILIKE ${keywordPattern}
       ${departmentCondition}
-      ORDER BY kpi_name
+      ORDER BY id DESC
       LIMIT ${filters.pageSize}
       OFFSET ${offset}
     `,
