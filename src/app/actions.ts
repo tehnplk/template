@@ -102,31 +102,20 @@ export async function saveKpiTemplate(
           data_entry_other = EXCLUDED.data_entry_other
       `;
 
-      if (
-        payload.pm.pm_name ||
-        payload.pm.pm_position ||
-        payload.pm.pm_department
-      ) {
-        await tx`
-          INSERT INTO kpi_pm (kpi_topic_id, pm_name, pm_position, pm_department)
-          VALUES (
-            ${savedTopicId},
-            ${payload.pm.pm_name || "-"},
-            ${payload.pm.pm_position},
-            ${payload.pm.pm_department}
-          )
-          ON CONFLICT (kpi_topic_id)
-          DO UPDATE SET
-            pm_name = EXCLUDED.pm_name,
-            pm_position = EXCLUDED.pm_position,
-            pm_department = EXCLUDED.pm_department
-        `;
-      } else {
-        await tx`
-          DELETE FROM kpi_pm
-          WHERE kpi_topic_id = ${savedTopicId}
-        `;
-      }
+      await tx`
+        INSERT INTO kpi_pm (kpi_topic_id, pm_name, pm_position, pm_department)
+        VALUES (
+          ${savedTopicId},
+          ${payload.pm.pm_name},
+          ${payload.pm.pm_position},
+          ${payload.pm.pm_department}
+        )
+        ON CONFLICT (kpi_topic_id)
+        DO UPDATE SET
+          pm_name = EXCLUDED.pm_name,
+          pm_position = EXCLUDED.pm_position,
+          pm_department = EXCLUDED.pm_department
+      `;
 
       if (payload.document) {
         await tx`

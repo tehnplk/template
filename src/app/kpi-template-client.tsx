@@ -818,6 +818,7 @@ export function KpiTemplateClient({
                         defaultValue={modalDetail?.pm?.pm_name ?? ""}
                         name="pm_name"
                         readOnly={isReadOnly}
+                        required
                       />
                     </Field>
 
@@ -827,6 +828,7 @@ export function KpiTemplateClient({
                         defaultValue={emptyValue(modalDetail?.pm?.pm_position)}
                         name="pm_position"
                         readOnly={isReadOnly}
+                        required
                       />
                     </Field>
 
@@ -838,6 +840,7 @@ export function KpiTemplateClient({
                         )}
                         name="pm_department"
                         disabled={isReadOnly}
+                        required
                       >
                         <option value="">ไม่ระบุ</option>
                         {departments.map((department) => (

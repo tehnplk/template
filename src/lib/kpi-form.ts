@@ -64,6 +64,9 @@ function isGoogleDriveUrl(value: string): boolean {
 
 export function parseKpiTemplateForm(formData: FormData): ParseKpiTemplateFormResult {
   const kpiName = getTrimmedString(formData, "kpi_name");
+  const pmName = getTrimmedString(formData, "pm_name");
+  const pmPosition = getTrimmedString(formData, "pm_position");
+  const pmDepartment = getTrimmedString(formData, "pm_department");
 
   if (!kpiName) {
     return {
@@ -88,6 +91,27 @@ export function parseKpiTemplateForm(formData: FormData): ParseKpiTemplateFormRe
     };
   }
 
+  if (!pmName) {
+    return {
+      ok: false,
+      message: "กรุณาระบุผู้รับผิดชอบ",
+    };
+  }
+
+  if (!pmPosition) {
+    return {
+      ok: false,
+      message: "กรุณาระบุตำแหน่ง",
+    };
+  }
+
+  if (!pmDepartment) {
+    return {
+      ok: false,
+      message: "กรุณาระบุกลุ่มงาน",
+    };
+  }
+
   const template = Object.fromEntries(
     optionalFields.map((field) => [field, getNullableString(formData, field)]),
   ) as KpiTemplatePayload["template"];
@@ -103,9 +127,9 @@ export function parseKpiTemplateForm(formData: FormData): ParseKpiTemplateFormRe
       },
       template,
       pm: {
-        pm_name: getTrimmedString(formData, "pm_name"),
-        pm_position: getNullableString(formData, "pm_position"),
-        pm_department: getNullableString(formData, "pm_department"),
+        pm_name: pmName,
+        pm_position: pmPosition,
+        pm_department: pmDepartment,
       },
       document,
     },
