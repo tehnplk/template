@@ -1,4 +1,5 @@
 ## RULE
+- Do not commit if user not ask.
 - Do not build and deploy  if user not ask.
 - After editing  do only  linting.
 
@@ -10,4 +11,4 @@
 read @deploy.md  if user ask for deploy
 
 ## Git
-always commit and push this file
+always commit and push this (AGENTS.md) file
