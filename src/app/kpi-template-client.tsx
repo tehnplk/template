@@ -756,6 +756,7 @@ export function KpiTemplateClient({
                           modalDetail?.template?.data_entry_lab,
                         )}
                         name="data_entry_lab"
+                        placeholder="การตรวจแล็ป และเกณฑ์ค่าแล็ปที่ใช้ประเมิน"
                         readOnly={isReadOnly}
                       />
                     </InlineField>
