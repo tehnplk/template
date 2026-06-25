@@ -19,6 +19,7 @@ import Link from "next/link";
 import Swal from "sweetalert2";
 import { useActionState, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { modalHint } from "@/lib/kpi-modal";
 import type {
   ActionState,
   DepartmentOption,
@@ -642,7 +643,10 @@ export function KpiTemplateClient({
                           modalDetail?.template?.target_area_type,
                         )}
                         name="target_area_type"
-                        placeholder="กรอก type area = 1,2,3,4,5"
+                        placeholder={modalHint(
+                          isReadOnly,
+                          "กรอก type area = 1,2,3,4,5",
+                        )}
                         readOnly={isReadOnly}
                       />
                     </InlineField>
@@ -670,7 +674,7 @@ export function KpiTemplateClient({
                           modalDetail?.template?.target_age_range,
                         )}
                         name="target_age_range"
-                        placeholder="เช่น 30-60"
+                        placeholder={modalHint(isReadOnly, "เช่น 30-60")}
                         readOnly={isReadOnly}
                       />
                     </InlineField>
@@ -682,7 +686,7 @@ export function KpiTemplateClient({
                           modalDetail?.template?.target_previous_diag,
                         )}
                         name="target_previous_diag"
-                        placeholder="ระบุ ICD10"
+                        placeholder={modalHint(isReadOnly, "ระบุ ICD10")}
                         readOnly={isReadOnly}
                       />
                     </InlineField>
@@ -756,7 +760,10 @@ export function KpiTemplateClient({
                           modalDetail?.template?.data_entry_lab,
                         )}
                         name="data_entry_lab"
-                        placeholder="การตรวจแล็ป และเกณฑ์ค่าแล็ปที่ใช้ประเมิน"
+                        placeholder={modalHint(
+                          isReadOnly,
+                          "การตรวจแล็ป และเกณฑ์ค่าแล็ปที่ใช้ประเมิน",
+                        )}
                         readOnly={isReadOnly}
                       />
                     </InlineField>
@@ -804,7 +811,10 @@ export function KpiTemplateClient({
                         modalDetail?.document?.google_drive_url,
                       )}
                       name="google_drive_url"
-                      placeholder="https://drive.google.com/..."
+                      placeholder={modalHint(
+                        isReadOnly,
+                        "https://drive.google.com/...",
+                      )}
                       readOnly={isReadOnly}
                       type="url"
                     />
