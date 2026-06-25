@@ -633,7 +633,7 @@ export function KpiTemplateClient({
                     </div>
                   </FormSection>
 
-                <FormSection icon={Target} title="วิธีการระบุกลุ่มเป้าหมาย">
+                <FormSection icon={Target} title="วิธีการระบุกลุ่มเป้าหมาย (จัดทำรายชื่อกลุ่มเป้าหมาย)">
                   <div className="grid gap-3">
                     <InlineField label="ประเภทการอยู่อาศัย (TYPE AREA)">
                       <input
@@ -702,7 +702,7 @@ export function KpiTemplateClient({
 
                 <FormSection
                   icon={Database}
-                  title="วิธีการบันทึกผลงานใน HIS"
+                  title="กิจกรรมที่ต้องบันทึกลงใน HIS เพื่อให้ได้ผลงาน"
                 >
                   <div className="grid gap-3">
                     <InlineField label="สิทธิรักษาที่ต้องลง">
